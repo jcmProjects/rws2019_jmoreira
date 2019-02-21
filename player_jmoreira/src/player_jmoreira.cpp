@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <ros/ros.h>
+#include <rws2019_msgs/MakeAPlay.h>
 
 
 /* Namespaces */
@@ -134,6 +135,11 @@ namespace jmoreira_ns {
                 ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
                 ROS_WARN_STREAM("I am hunting " << team_preys->team_name << " and running away from " << team_hunters->team_name);
             }
+
+            void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
+
+                ROS_INFO("received a new msg");
+            }
     };
 }
 using namespace jmoreira_ns; 
@@ -152,16 +158,16 @@ int main(int argc, char* argv[]) {
     NodeHandle n;
 
     MyPlayer player("jmoreira", "red");
-    //player.printInfo();
 
-    Team team_red("red");
+    //Team team_red("red");
+
+    ros::Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
 
     while(ok()) {
 
-        // team_red.printInfo();
-        // cout << "blourenço belongs to team? " << team_red.playerBelongsToTeam("blourenço") << endl;
-
         Duration(1).sleep();
+        player.printInfo();
+        spinOnce();
     }
 
     return 0;
