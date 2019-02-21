@@ -27,14 +27,12 @@ namespace jmoreira_ns {
                 n.getParam("/team_" + team_name, player_names);
             }
 
-
             void printInfo() {
                 cout << "Team " << team_name << " has players: " << endl;
 
                 for (size_t i=0; i<player_names.size(); i++)
                     cout << player_names[i] << endl;
             }
-
 
             bool playerBelongsToTeam(string player_name) {
                 
