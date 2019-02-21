@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- -->
+
+<launch>
+
+	<rosparam command="load" file="$(find player_jmoreira)/params/params.yaml"/>
+
+	<node pkg="player_jmoreira" type="player_jmoreira_node" name="jmoreira" respawn="true" output="screen"/>
+ 
+</launch>
