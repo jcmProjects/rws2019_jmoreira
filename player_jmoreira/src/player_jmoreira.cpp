@@ -137,6 +137,7 @@ namespace jmoreira_ns {
                 /* Define initial position */
                 float sx = randomizePosition();
                 float sy = randomizePosition();
+                
 
                 Transform T;
                 T.setOrigin( Vector3(sx, sy, 0.0) );
@@ -144,7 +145,8 @@ namespace jmoreira_ns {
                 q.setRPY(0, 0, M_PI);
                 T.setRotation(q);
                 br.sendTransform( StampedTransform(T, Time::now(), "world", player_name) );
-
+                Duration(0.1).sleep();
+                br.sendTransform( StampedTransform(T, Time::now(), "world", player_name) );
                 printInfo();
             }
 
@@ -167,8 +169,14 @@ namespace jmoreira_ns {
                 }
 
                 /* Step 2: Decide how I want to move */
-                float dx = 0.5;
-                float angle = M_PI/6;
+                float dx = 0.1;
+                float angle = M_PI/16;
+
+                /* Step 2.5: check values */
+                double dx_max = msg->turtle; // must be hardcoded
+                dx > dx_max ? dx = dx_max: dx = dx;
+                double angle_max = M_PI/30;
+                fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle): angle = angle;
 
                 /* Step 3: Define local movement */
                 Transform T1;
