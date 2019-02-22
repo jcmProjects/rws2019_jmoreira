@@ -140,7 +140,7 @@ namespace jmoreira_ns {
 
                 /* Publish a transformation (tf) */
                 Transform transform1;
-                transform.setOrigin( Vector3(2.0, 3.0, 1.0) );
+                transform.setOrigin( Vector3(2.0, 3.0, 0.0) );
                 Quaternion q;
                 q.setRPY(0, 0, 1); // (0,0, 0)
                 transform.setRotation(q);
