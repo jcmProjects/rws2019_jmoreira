@@ -1,13 +1,16 @@
+/* Includes */
 #include <iostream>
 #include <vector>
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
+#include <tf/transform_broadcaster.h>
 
 
 /* Namespaces */
 using namespace std;
 using namespace boost;
 using namespace ros;
+using namespace tf;
 
 
 /* Created namespace */
@@ -35,7 +38,6 @@ namespace jmoreira_ns {
             }
 
             bool playerBelongsToTeam(string player_name) {
-                
                 for (size_t i=0; i<player_names.size(); i++) {
                     if (player_name == player_names[i])
                         return true;
@@ -57,7 +59,6 @@ namespace jmoreira_ns {
             }
 
             void setTeamName(string team_name_in) {
-
                 if (team_name_in == "red" || team_name_in == "green" || team_name_in == "blue")
                     team_name = team_name_in;
                 else
@@ -65,7 +66,6 @@ namespace jmoreira_ns {
             }
 
             void setTeamName(int team_index) {
-
                 if (team_index == 0)
                     setTeamName("red");
                 else if (team_index == 1)
@@ -96,6 +96,8 @@ namespace jmoreira_ns {
             boost::shared_ptr<Team> team_mine;
             boost::shared_ptr<Team> team_preys;
             boost::shared_ptr<Team> team_hunters;
+            TransformBroadcaster br;
+            Transform transform;
 
             /* Methods */
             MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in) {
@@ -129,14 +131,21 @@ namespace jmoreira_ns {
             }
 
             void printInfo(void) {
-
                 ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
                 ROS_WARN_STREAM("I am hunting " << team_preys->team_name << " and running away from " << team_hunters->team_name);
             }
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
-
                 ROS_INFO("received a new msg");
+
+                /* Publish a transformation (tf) */
+                Transform transform1;
+                transform.setOrigin( Vector3(2.0, 3.0, 1.0) );
+                Quaternion q;
+                q.setRPY(0, 0, 1); // (0,0, 0)
+                transform.setRotation(q);
+                br.sendTransform( StampedTransform(transform, Time::now(), "world", player_name) );
+                
             }
     };
 }
@@ -157,12 +166,9 @@ int main(int argc, char* argv[]) {
 
     MyPlayer player("jmoreira", "red");
 
-    //Team team_red("red");
+    Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
 
-    ros::Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
-
-    while(ok()) {
-
+    while( ok() ) {
         Duration(1).sleep();
         player.printInfo();
         spinOnce();
