@@ -181,7 +181,7 @@ namespace jmoreira_ns {
                 return {dist, angle};
             }
 
-            std::tuple<float, float> getDistanceAndAngleToArena(string other_player) {
+            std::tuple<float, float> getDistanceAndAngleToArena(void) {
                 return getDistanceAndAngleToPlayer("world");
             }
 
@@ -218,7 +218,7 @@ namespace jmoreira_ns {
                         distance_to_closest_prey = distance_to_preys[i];
                     }
                 }
-                /*
+                
                 //* HUNTERS
                 vector<float> distance_to_hunters;
                 vector<float> angle_to_hunters;
@@ -237,20 +237,44 @@ namespace jmoreira_ns {
                         distance_to_closest_hunter = distance_to_hunters[i];
                     }
                 }
-                //* PREYS vs HUNTERS
+                //* WORLD BOUNDARIES
+                vector<float> distance_to_center;
+                vector<float> angle_to_center;
+                std::tuple<float, float> t = getDistanceAndAngleToArena();
+                distance_to_center.push_back( std::get<0>(t) );
+                angle_to_center.push_back( std::get<1>(t) );
+                //* PREYS vs HUNTERS vs WORLD
                 float dx;
                 float angle;
-                if (distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) {
-                    dx = -10; //(-1) * distance_to_hunters[idx_closest_hunter];
+                if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 4.8)) {
+                    dx = 10; //(-1) * distance_to_hunters[idx_closest_hunter];
                     angle = (-1) * angle_to_hunters[idx_closest_hunter];
                 }
-                else {
+                else if ((distance_to_preys[idx_closest_prey] < distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 4.8)){
                     dx = 10; //distance_to_preys[idx_closest_prey];
                     angle = angle_to_preys[idx_closest_prey]; 
                 }
-                */
+                else {
+                    dx = 0.05;
+                    angle = angle_to_center[0];
+                }
+                
+                /*
                 float dx = 10;
                 float angle = angle_to_preys[idx_closest_prey];
+                */
+                /*
+                if (distance_to_center[0] > 4.0) {
+                    dx = 1;
+                    angle = angle_to_center[0];
+                }
+                if (distance_to_center[0] >= 4.9) {
+                    dx = 0.2;
+                    angle = angle_to_center[0];
+                }
+                */
+ 
+                
                 
 
                 /* Step 2.5: check values */
