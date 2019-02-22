@@ -181,8 +181,8 @@ namespace jmoreira_ns {
                 return {dist, angle};
             }
 
-            double getDistanceToArena(string other_player) {
-               
+            std::tuple<float, float> getDistanceAndAngleToArena(string other_player) {
+                return getDistanceAndAngleToPlayer("world");
             }
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
@@ -199,6 +199,8 @@ namespace jmoreira_ns {
                 }
 
                 /* Step 2: Decide how I want to move */
+                
+                //* PREYS
                 vector<float> distance_to_preys;
                 vector<float> angle_to_preys;
                 // For each prey, find the closest. Then, follow it.
@@ -208,7 +210,6 @@ namespace jmoreira_ns {
                     distance_to_preys.push_back( std::get<0>(t) );
                     angle_to_preys.push_back( std::get<1>(t) );
                 }
-
                 int idx_closest_prey = 0;
                 float distance_to_closest_prey = 1000;
                 for (size_t i=0; i<distance_to_preys.size(); i++) {
@@ -217,9 +218,40 @@ namespace jmoreira_ns {
                         distance_to_closest_prey = distance_to_preys[i];
                     }
                 }
-                
-                float dx = distance_to_preys[idx_closest_prey];
+                /*
+                //* HUNTERS
+                vector<float> distance_to_hunters;
+                vector<float> angle_to_hunters;
+                // For each prey, find the closest. Then, follow it.
+                for (size_t i=0; i<team_hunters->player_names.size(); i++) {
+                    ROS_WARN_STREAM("Hunters = " << team_hunters->player_names[i]);
+                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_hunters->player_names[i]);
+                    distance_to_hunters.push_back( std::get<0>(t) );
+                    angle_to_hunters.push_back( std::get<1>(t) );
+                }
+                int idx_closest_hunter = 0;
+                float distance_to_closest_hunter = 1000;
+                for (size_t i=0; i<distance_to_preys.size(); i++) {
+                    if (distance_to_hunters[i] < distance_to_closest_hunter) {
+                        idx_closest_hunter = i;
+                        distance_to_closest_hunter = distance_to_hunters[i];
+                    }
+                }
+                //* PREYS vs HUNTERS
+                float dx;
+                float angle;
+                if (distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) {
+                    dx = -10; //(-1) * distance_to_hunters[idx_closest_hunter];
+                    angle = (-1) * angle_to_hunters[idx_closest_hunter];
+                }
+                else {
+                    dx = 10; //distance_to_preys[idx_closest_prey];
+                    angle = angle_to_preys[idx_closest_prey]; 
+                }
+                */
+                float dx = 10;
                 float angle = angle_to_preys[idx_closest_prey];
+                
 
                 /* Step 2.5: check values */
                 double dx_max = msg->turtle; // must be hardcoded
