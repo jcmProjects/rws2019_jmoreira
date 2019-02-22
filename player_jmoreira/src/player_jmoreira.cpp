@@ -107,6 +107,7 @@ namespace jmoreira_ns {
             TransformBroadcaster br;
             TransformListener listener;
             boost::shared_ptr<Publisher> vis_pub;
+            boost::shared_ptr<Publisher> vis_pub2;
 
             /* Methods */
             MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in) {
@@ -118,7 +119,9 @@ namespace jmoreira_ns {
 
                 NodeHandle n;
                 vis_pub     = (boost::shared_ptr<Publisher>) new Publisher;
+                vis_pub2    = (boost::shared_ptr<Publisher>) new Publisher;
                 (*vis_pub)  = n.advertise<visualization_msgs::Marker>( "player_names", 0 );
+                (*vis_pub2) = n.advertise<visualization_msgs::Marker>( "bocas", 0 );
 
                 if (team_red->playerBelongsToTeam(player_name)) {
                     team_mine    = team_red;
@@ -219,6 +222,30 @@ namespace jmoreira_ns {
                     }
                 }
                 
+
+                visualization_msgs::Marker marker_bocas;
+                marker_bocas.header.frame_id = player_name;
+                marker_bocas.header.stamp = Time();
+                marker_bocas.ns = player_name;
+                marker_bocas.id = 0;
+                marker_bocas.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                marker_bocas.action = visualization_msgs::Marker::ADD;
+                // marker.pose.position.x = 1;
+                // marker.pose.position.y = 1;
+                // marker.pose.position.z = 1;
+                // marker.pose.orientation.x = 0.0;
+                // marker.pose.orientation.y = 0.0;
+                // marker.pose.orientation.z = 0.0;
+                marker_bocas.pose.orientation.w = 1.0;
+                // marker.scale.x = 1;
+                // marker.scale.y = 0.1;
+                marker_bocas.scale.z = 0.4;
+                marker_bocas.color.a = 1.0; // Don't forget to set the alpha!
+                marker_bocas.color.r = 0.0;
+                marker_bocas.color.g = 0.0;
+                marker_bocas.color.b = 0.0;
+                marker_bocas.text = "Vou-te apanhar";
+
                 //* HUNTERS
                 vector<float> distance_to_hunters;
                 vector<float> angle_to_hunters;
@@ -246,16 +273,27 @@ namespace jmoreira_ns {
                 //* PREYS vs HUNTERS vs WORLD
                 float dx;
                 float angle;
-                if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 4.8)) {
-                    dx = 10; //(-1) * distance_to_hunters[idx_closest_hunter];
+                if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
+                    dx = 10; 
                     angle = (-1) * angle_to_hunters[idx_closest_hunter];
                 }
-                else if ((distance_to_preys[idx_closest_prey] < distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 4.8)){
-                    dx = 10; //distance_to_preys[idx_closest_prey];
+                else if ((distance_to_preys[idx_closest_prey] < distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)){
+                    dx = 10;
+                    if (distance_to_preys[idx_closest_prey] < 1)
+                        dx = 0.1;
                     angle = angle_to_preys[idx_closest_prey]; 
+                    vis_pub2->publish( marker_bocas );
+                }
+                else if ((distance_to_center[0] >= 6.8) && (distance_to_center[0] <= 7.4)) {
+                    dx = 0.1;
+                    angle = angle_to_center[0];
+                }
+                else if ((distance_to_center[0] > 7.4) && (angle_to_center[0] != 0.0)) {
+                    dx = 0.1;
+                    angle = angle_to_center[0];
                 }
                 else {
-                    dx = 0.05;
+                    dx = 0;
                     angle = angle_to_center[0];
                 }
                 
@@ -317,9 +355,6 @@ namespace jmoreira_ns {
                 marker.color.g = 0.0;
                 marker.color.b = 0.0;
                 marker.text = player_name;
-
-                //only if using a MESH_RESOURCE marker type:
-                // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
                 vis_pub->publish( marker );
             }
     };
