@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 
 /* Namespaces */
@@ -11,6 +12,12 @@ using namespace std;
 using namespace boost;
 using namespace ros;
 using namespace tf;
+
+
+float randomizePosition(void) {
+    srand( 6832 * time(NULL) );                             // set initial seed value to 5323
+    return ( ((double)rand() / (RAND_MAX)) - 0.5) * 10;
+}
 
 
 /* Created namespace */
@@ -97,7 +104,7 @@ namespace jmoreira_ns {
             boost::shared_ptr<Team> team_preys;
             boost::shared_ptr<Team> team_hunters;
             TransformBroadcaster br;
-            Transform transform;
+            TransformListener listener;
 
             /* Methods */
             MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in) {
@@ -126,25 +133,53 @@ namespace jmoreira_ns {
                     cout << "Something wrong happened in team parameterization!!!" << endl;
             
                 setTeamName(team_mine->team_name);
+                
+                /* Define initial position */
+                float sx = randomizePosition();
+                float sy = randomizePosition();
+
+                Transform T;
+                T.setOrigin( Vector3(sx, sy, 0.0) );
+                Quaternion q;
+                q.setRPY(0, 0, M_PI);
+                T.setRotation(q);
+                br.sendTransform( StampedTransform(T, Time::now(), "world", player_name) );
 
                 printInfo();
             }
 
             void printInfo(void) {
                 ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
-                ROS_WARN_STREAM("I am hunting " << team_preys->team_name << " and running away from " << team_hunters->team_name);
+                ROS_INFO_STREAM("I am hunting " << team_preys->team_name << " and fleeing from " << team_hunters->team_name);
             }
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
                 ROS_INFO("received a new msg");
 
-                /* Publish a transformation (tf) */
-                Transform transform1;
-                transform.setOrigin( Vector3(2.0, 3.0, 0.0) );
+                /* Step 1: Find out where I am */
+                StampedTransform T0;
+                try {
+                    listener.lookupTransform("/world", player_name, Time(0), T0);
+                }
+                catch (TransformException ex) {
+                    ROS_ERROR("%s", ex.what());
+                    Duration(0.1).sleep();
+                }
+
+                /* Step 2: Decide how I want to move */
+                float dx = 0.5;
+                float angle = M_PI/6;
+
+                /* Step 3: Define local movement */
+                Transform T1;
+                T1.setOrigin( Vector3(dx, 0.0, 0.0) );
                 Quaternion q;
-                q.setRPY(0, 0, 1); // (0,0, 0)
-                transform.setRotation(q);
-                br.sendTransform( StampedTransform(transform, Time::now(), "world", player_name) );
+                q.setRPY(0, 0, angle);
+                T1.setRotation(q);
+
+                /* Step 4: Define global movement */
+                Transform Tglobal = T0 * T1;
+                br.sendTransform( StampedTransform(Tglobal, Time::now(), "world", player_name) );
                 
             }
     };
@@ -165,14 +200,15 @@ int main(int argc, char* argv[]) {
     NodeHandle n;
 
     MyPlayer player("jmoreira", "red");
+    player.printInfo();
 
     Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
 
+    Rate r(20);
     while( ok() ) {
-        Duration(1).sleep();
-        player.printInfo();
         spinOnce();
+        r.sleep();
     }
 
-    return 0;
+    return 1;
 }
