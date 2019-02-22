@@ -278,10 +278,6 @@ namespace jmoreira_ns {
                     dx = 0.1;
                     angle = angle_to_center[0];
                 }
-                else if ((distance_to_center[0] > 7.4) && (angle_to_center[0] != 0.0)) {
-                    dx = 0.1;
-                    angle = angle_to_center[0];
-                }
                 else {
                     dx = 0.1;
                     angle = angle_to_center[0];
