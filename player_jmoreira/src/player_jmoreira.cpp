@@ -20,6 +20,11 @@ float randomizePosition(void) {
     return ( ((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
+float randomizePosition2(void) {
+    srand( 5532 * time(NULL) );                             // set initial seed value to 5323
+    return ( ((double)rand() / (RAND_MAX)) - 0.5) * 10;
+}
+
 
 /* Created namespace */
 namespace jmoreira_ns {
@@ -145,7 +150,7 @@ namespace jmoreira_ns {
                 
                 /* Define initial position */
                 float sx = randomizePosition();
-                float sy = randomizePosition();
+                float sy = randomizePosition2();
                 
 
                 Transform T;
@@ -199,7 +204,7 @@ namespace jmoreira_ns {
                 marker_bocas.id = 0;
                 marker_bocas.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
                 marker_bocas.action = visualization_msgs::Marker::ADD;
-                marker_bocas.pose.position.y = 1;
+                marker_bocas.pose.position.x = 1;
                 marker_bocas.scale.z = 0.4;
                 marker_bocas.color.a = 1.0; // Don't forget to set the alpha!
                 marker_bocas.color.r = 0.0;
@@ -222,7 +227,7 @@ namespace jmoreira_ns {
                 vector<float> distance_to_preys;
                 vector<float> angle_to_preys;
                 // For each prey, find the closest. Then, follow it.
-                for (size_t i=0; i<team_preys->player_names.size(); i++) { // team_preys->player_names or msg->green_alive
+                for (size_t i=0; i<team_preys->player_names.size(); i++) {                      // team_preys->player_names or msg->green_alive
                     ROS_WARN_STREAM("Preys = " << team_preys->player_names[i]);
                     std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
                     distance_to_preys.push_back( std::get<0>(t) );
@@ -240,7 +245,7 @@ namespace jmoreira_ns {
                 vector<float> distance_to_hunters;
                 vector<float> angle_to_hunters;
                 // For each prey, find the closest. Then, follow it.
-                for (size_t i=0; i<team_hunters->player_names.size(); i++) { // team_hunters->player_names or msg->blue_alive
+                for (size_t i=0; i<team_hunters->player_names.size(); i++) {                    // team_hunters->player_names or msg->blue_alive
                     ROS_WARN_STREAM("Hunters = " << team_hunters->player_names[i]);
                     std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_hunters->player_names[i]);
                     distance_to_hunters.push_back( std::get<0>(t) );
@@ -265,7 +270,7 @@ namespace jmoreira_ns {
                 float angle;
                 if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
                     dx = msg->turtle; 
-                    angle = (-1) * angle_to_hunters[idx_closest_hunter];
+                    angle = M_PI/2 + angle_to_hunters[idx_closest_hunter];
                 }
                 else if ((distance_to_preys[idx_closest_prey] < distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)){
                     dx = msg->turtle;
@@ -275,11 +280,15 @@ namespace jmoreira_ns {
                     vis_pub2->publish( marker_bocas );
                 }
                 else if ((distance_to_center[0] >= 7.2) && (distance_to_center[0] <= 7.6)) {
-                    dx = msg->turtle * 0.6;
+                    dx = msg->turtle * 0.8;
+                    angle = angle_to_center[0];
+                }
+                else if ((distance_to_center[0] >= 7.6) && (distance_to_center[0] <= 7.8)){
+                    dx = msg->turtle * 0.4;
                     angle = angle_to_center[0];
                 }
                 else {
-                    dx = msg->turtle * 0.2;
+                    dx = msg->turtle * 0.1;
                     angle = angle_to_center[0];
                 }
                 
