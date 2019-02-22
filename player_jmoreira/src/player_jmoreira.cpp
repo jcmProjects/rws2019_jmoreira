@@ -16,7 +16,7 @@ using namespace tf;
 
 
 float randomizePosition(void) {
-    srand( 6832 * time(NULL) );                             // set initial seed value to 5323
+    srand( 6532 * time(NULL) );                             // set initial seed value to 5323
     return ( ((double)rand() / (RAND_MAX)) - 0.5) * 10;
 }
 
@@ -191,6 +191,22 @@ namespace jmoreira_ns {
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
                 ROS_INFO("received a new msg");
 
+                //* Bocas
+                visualization_msgs::Marker marker_bocas;
+                marker_bocas.header.frame_id = player_name;
+                marker_bocas.header.stamp = Time();
+                marker_bocas.ns = player_name;
+                marker_bocas.id = 0;
+                marker_bocas.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                marker_bocas.action = visualization_msgs::Marker::ADD;
+                marker_bocas.pose.position.y = 1;
+                marker_bocas.scale.z = 0.4;
+                marker_bocas.color.a = 1.0; // Don't forget to set the alpha!
+                marker_bocas.color.r = 0.0;
+                marker_bocas.color.g = 0.0;
+                marker_bocas.color.b = 0.0;
+                marker_bocas.text = "Vou-te apanhar";
+
                 /* Step 1: Find out where I am */
                 StampedTransform T0;
                 try {
@@ -202,14 +218,13 @@ namespace jmoreira_ns {
                 }
 
                 /* Step 2: Decide how I want to move */
-                
                 //* PREYS
                 vector<float> distance_to_preys;
                 vector<float> angle_to_preys;
                 // For each prey, find the closest. Then, follow it.
-                for (size_t i=0; i<team_preys->player_names.size(); i++) {
-                    ROS_WARN_STREAM("Preys = " << team_preys->player_names[i]);
-                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
+                for (size_t i=0; i<msg->green_alive.size(); i++) {
+                    ROS_WARN_STREAM("Preys = " << msg->green_alive[i]);
+                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->green_alive[i]);
                     distance_to_preys.push_back( std::get<0>(t) );
                     angle_to_preys.push_back( std::get<1>(t) );
                 }
@@ -221,38 +236,13 @@ namespace jmoreira_ns {
                         distance_to_closest_prey = distance_to_preys[i];
                     }
                 }
-                
-
-                visualization_msgs::Marker marker_bocas;
-                marker_bocas.header.frame_id = player_name;
-                marker_bocas.header.stamp = Time();
-                marker_bocas.ns = player_name;
-                marker_bocas.id = 0;
-                marker_bocas.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-                marker_bocas.action = visualization_msgs::Marker::ADD;
-                // marker.pose.position.x = 1;
-                // marker.pose.position.y = 1;
-                // marker.pose.position.z = 1;
-                // marker.pose.orientation.x = 0.0;
-                // marker.pose.orientation.y = 0.0;
-                // marker.pose.orientation.z = 0.0;
-                marker_bocas.pose.orientation.w = 1.0;
-                // marker.scale.x = 1;
-                // marker.scale.y = 0.1;
-                marker_bocas.scale.z = 0.4;
-                marker_bocas.color.a = 1.0; // Don't forget to set the alpha!
-                marker_bocas.color.r = 0.0;
-                marker_bocas.color.g = 0.0;
-                marker_bocas.color.b = 0.0;
-                marker_bocas.text = "Vou-te apanhar";
-
                 //* HUNTERS
                 vector<float> distance_to_hunters;
                 vector<float> angle_to_hunters;
                 // For each prey, find the closest. Then, follow it.
-                for (size_t i=0; i<team_hunters->player_names.size(); i++) {
-                    ROS_WARN_STREAM("Hunters = " << team_hunters->player_names[i]);
-                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_hunters->player_names[i]);
+                for (size_t i=0; i<msg->blue_alive.size(); i++) {
+                    ROS_WARN_STREAM("Hunters = " << msg->blue_alive[i]);
+                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->blue_alive[i]);
                     distance_to_hunters.push_back( std::get<0>(t) );
                     angle_to_hunters.push_back( std::get<1>(t) );
                 }
@@ -293,11 +283,28 @@ namespace jmoreira_ns {
                     angle = angle_to_center[0];
                 }
                 else {
-                    dx = 0;
+                    dx = 0.1;
                     angle = angle_to_center[0];
                 }
                 
                 /*
+                vector<float> distance_to_preys;
+                vector<float> angle_to_preys;
+                // For each prey, find the closest. Then, follow it.
+                for (size_t i=0; i<team_preys->player_names.size(); i++) {
+                    ROS_WARN_STREAM("Preys = " << team_preys->player_names[i]);
+                    std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
+                    distance_to_preys.push_back( std::get<0>(t) );
+                    angle_to_preys.push_back( std::get<1>(t) );
+                }
+                int idx_closest_prey = 0;
+                float distance_to_closest_prey = 1000;
+                for (size_t i=0; i<distance_to_preys.size(); i++) {
+                    if (distance_to_preys[i] < distance_to_closest_prey) {
+                        idx_closest_prey = i;
+                        distance_to_closest_prey = distance_to_preys[i];
+                    }
+                }
                 float dx = 10;
                 float angle = angle_to_preys[idx_closest_prey];
                 */
@@ -311,9 +318,6 @@ namespace jmoreira_ns {
                     angle = angle_to_center[0];
                 }
                 */
- 
-                
-                
 
                 /* Step 2.5: check values */
                 double dx_max = msg->turtle; // must be hardcoded
@@ -340,15 +344,6 @@ namespace jmoreira_ns {
                 marker.id = 0;
                 marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
                 marker.action = visualization_msgs::Marker::ADD;
-                // marker.pose.position.x = 1;
-                // marker.pose.position.y = 1;
-                // marker.pose.position.z = 1;
-                // marker.pose.orientation.x = 0.0;
-                // marker.pose.orientation.y = 0.0;
-                // marker.pose.orientation.z = 0.0;
-                // marker.pose.orientation.w = 1.0;
-                // marker.scale.x = 1;
-                // marker.scale.y = 0.1;
                 marker.scale.z = 0.6;
                 marker.color.a = 1.0; // Don't forget to set the alpha!
                 marker.color.r = 1.0;
