@@ -218,6 +218,7 @@ namespace jmoreira_ns {
                 marker_bocas.color.g = 0.0;
                 marker_bocas.color.b = 0.0;
                 marker_bocas.lifetime = Duration(2);
+                marker_bocas.frame_locked = true;
                 // marker_bocas.text = "Vou-te apanhar";
 
                 /* Step 1: Find out where I am */
@@ -277,15 +278,20 @@ namespace jmoreira_ns {
                 bool something_changed = false;
                 if (idx_closest_prey != -1) {
                     string prey = team_preys->player_names[idx_closest_prey];
+                    string hunter = team_hunters->player_names[idx_closest_hunter];
                     if (prey != last_prey) {
                         something_changed = true;
                         last_prey = prey;
                     }
-                    string hunter = team_hunters->player_names[idx_closest_hunter];
-                    if (hunter != last_hunter) {
+                    else if (hunter != last_hunter) {
                         something_changed = true;
                         last_hunter = hunter;
                     }
+                    else
+                    {
+                        something_changed = false;
+                    }
+                    
                 }
                 //* WORLD BOUNDARIES
                 vector<float> distance_to_center;
