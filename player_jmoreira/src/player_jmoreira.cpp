@@ -343,7 +343,11 @@ namespace jmoreira_ns {
                 double dx_max = msg->turtle; // must be hardcoded
                 dx > dx_max ? dx = dx_max: dx = dx;
                 double angle_max = M_PI/30;
-                fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle): angle = angle;
+                if (angle != 0)
+                    fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle): angle = angle;
+                else
+                    angle = 0;
+                
 
                 /* Step 3: Define local movement */
                 Transform T1;
