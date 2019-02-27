@@ -310,7 +310,7 @@ namespace jmoreira_ns {
                 float angle;
                 if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
                     dx = msg->turtle; 
-                    angle = M_PI/2 + angle_to_hunters[idx_closest_hunter];
+                    angle = (-1) + angle_to_hunters[idx_closest_hunter]; // M_PI/2 + angle_to_hunters[idx_closest_hunter] OR (-1) * angle_to_hunters[idx_closest_hunter]
                     /*
                     string hunter_name = team_hunters->player_names[idx_closest_hunter];
                     if (something_changed = true) {
