@@ -310,7 +310,7 @@ namespace jmoreira_ns {
                 float angle;
                 if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
                     dx = msg->turtle; 
-                    angle = (-1) + angle_to_hunters[idx_closest_hunter]; // M_PI/2 + angle_to_hunters[idx_closest_hunter] OR (-1) * angle_to_hunters[idx_closest_hunter]
+                    angle = (-1) * angle_to_hunters[idx_closest_hunter]; // M_PI/2 + angle_to_hunters[idx_closest_hunter] OR (-1) * angle_to_hunters[idx_closest_hunter]
                     /*
                     string hunter_name = team_hunters->player_names[idx_closest_hunter];
                     if (something_changed = true) {
@@ -334,11 +334,11 @@ namespace jmoreira_ns {
                     }
                     */
                 }
-                else if ((distance_to_center[0] >= 7.2) && (distance_to_center[0] <= 7.6)) {
+                else if ((distance_to_center[0] >= 6.8) && (distance_to_center[0] <= 7.6)) {
                     dx = msg->turtle * 0.8;
                     angle = angle_to_center[0];
                 }
-                else if ((distance_to_center[0] >= 7.6) && (distance_to_center[0] <= 7.8)){
+                else if ((distance_to_center[0] > 7.6) && (distance_to_center[0] <= 7.8)){
                     dx = msg->turtle * 0.4;
                     angle = angle_to_center[0];
                 }
@@ -383,6 +383,7 @@ namespace jmoreira_ns {
                     angle = angle_to_center[0];
                 }
                 */
+
 
                 /* Step 2.5: check values */
                 double dx_max = msg->turtle; // must be hardcoded
