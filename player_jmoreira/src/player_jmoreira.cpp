@@ -118,6 +118,8 @@ namespace jmoreira_ns {
             TransformListener listener;
             boost::shared_ptr<Publisher> vis_pub;
             boost::shared_ptr<Publisher> vis_pub2;
+            string last_prey = "";
+            string last_hunter = "";
 
             /* Methods */
             MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in) {
@@ -209,13 +211,14 @@ namespace jmoreira_ns {
                 marker_bocas.id = 0;
                 marker_bocas.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
                 marker_bocas.action = visualization_msgs::Marker::ADD;
-                marker_bocas.pose.position.x = 1;
+                marker_bocas.pose.position.x = 0.5;
                 marker_bocas.scale.z = 0.4;
                 marker_bocas.color.a = 1.0; // Don't forget to set the alpha!
                 marker_bocas.color.r = 0.0;
                 marker_bocas.color.g = 0.0;
                 marker_bocas.color.b = 0.0;
-                marker_bocas.text = "Vou-te apanhar";
+                marker_bocas.lifetime = Duration(2);
+                // marker_bocas.text = "Vou-te apanhar";
 
                 /* Step 1: Find out where I am */
                 StampedTransform T0;
@@ -243,7 +246,7 @@ namespace jmoreira_ns {
                     distance_to_preys.push_back( std::get<0>(t) );
                     angle_to_preys.push_back( std::get<1>(t) );
                 }
-                int idx_closest_prey = 0;
+                int idx_closest_prey = -1;
                 float distance_to_closest_prey = 1000;
                 for (size_t i=0; i<distance_to_preys.size(); i++) {
                     if (distance_to_preys[i] < distance_to_closest_prey) {
@@ -251,6 +254,7 @@ namespace jmoreira_ns {
                         distance_to_closest_prey = distance_to_preys[i];
                     }
                 }
+                
                 //* HUNTERS
                 vector<float> distance_to_hunters;
                 vector<float> angle_to_hunters;
@@ -269,6 +273,20 @@ namespace jmoreira_ns {
                         distance_to_closest_hunter = distance_to_hunters[i];
                     }
                 }
+                //* Check if last_prey is different from prey
+                bool something_changed = false;
+                if (idx_closest_prey != -1) {
+                    string prey = team_preys->player_names[idx_closest_prey];
+                    if (prey != last_prey) {
+                        something_changed = true;
+                        last_prey = prey;
+                    }
+                    string hunter = team_hunters->player_names[idx_closest_hunter];
+                    if (hunter != last_hunter) {
+                        something_changed = true;
+                        last_hunter = hunter;
+                    }
+                }
                 //* WORLD BOUNDARIES
                 vector<float> distance_to_center;
                 vector<float> angle_to_center;
@@ -281,13 +299,22 @@ namespace jmoreira_ns {
                 if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
                     dx = msg->turtle; 
                     angle = M_PI/2 + angle_to_hunters[idx_closest_hunter];
+                    string hunter_name = team_hunters->player_names[idx_closest_hunter];
+                    if (something_changed = true) {
+                        marker_bocas.text = "Nao me apanhas " + hunter_name;
+                        vis_pub2->publish( marker_bocas );
+                    }
                 }
                 else if ((distance_to_preys[idx_closest_prey] < distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)){
                     dx = msg->turtle;
                     if (distance_to_preys[idx_closest_prey] < 1)
                         dx = 0.1;
                     angle = angle_to_preys[idx_closest_prey]; 
-                    vis_pub2->publish( marker_bocas );
+                    string prey_name = team_preys->player_names[idx_closest_prey];
+                    if (something_changed = true) {
+                        marker_bocas.text = "Vou-te apanhar " + prey_name;
+                        vis_pub2->publish( marker_bocas );
+                    }
                 }
                 else if ((distance_to_center[0] >= 7.2) && (distance_to_center[0] <= 7.6)) {
                     dx = msg->turtle * 0.8;
