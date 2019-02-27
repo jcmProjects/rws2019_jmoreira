@@ -1,3 +1,8 @@
+/*
+ * cc 
+ * roslaunch rws2019_bringup bringup.launch 
+ */
+
 /* Includes */
 #include <iostream>
 #include <vector>
@@ -223,6 +228,11 @@ namespace jmoreira_ns {
                 }
 
                 /* Step 2: Decide how I want to move */
+                /*
+                 * **********
+                 * AI
+                 * **********
+                 */
                 //* PREYS
                 vector<float> distance_to_preys;
                 vector<float> angle_to_preys;
@@ -292,6 +302,11 @@ namespace jmoreira_ns {
                     angle = angle_to_center[0];
                 }
                 
+                /*
+                 * **********
+                 * the most basic AI
+                 * **********
+                 */
                 /*
                 vector<float> distance_to_preys;
                 vector<float> angle_to_preys;
