@@ -15,6 +15,7 @@
 // #include <pcl_ros/point_cloud.h>
 // #include <pcl/point_types.h>
 // #include <boost/foreach.hpp>
+#include <rws2019_msgs/DoTheMath.h>
 
 
 /* Namespaces */
@@ -214,6 +215,30 @@ namespace jmoreira_ns {
             }
             */
             // TODO: ################################################################
+
+            //? FIXME: ***********************************************************
+            bool serverCallback(rws2019_msgs::DoTheMath::Request &req, rws2019_msgs::DoTheMath::Response &res) {
+                
+                if (req.op == "+") 
+                    res.result == req.a + req.b;
+                else if (req.op == "-")
+                    res.result = req.a - req.b;
+                else if (req.op == "*")
+                    res.result = req.a * req.b;
+                else if (req.op == "x")
+                    res.result = req.a * req.b;
+                else if ( (req.op == "/") && (req.b == 0) )
+                    return false;
+                else if (req.op == "/")
+                    res.result = req.a / req.b;
+                else 
+                    return false;
+
+                ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
+                ROS_INFO("sending back response: [%ld]", (long int)res.result);
+                return true;
+            }
+            //? FIXME: ***********************************************************
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
                 ROS_INFO("received a new msg");
@@ -459,6 +484,7 @@ int main(int argc, char* argv[]) {
 
     Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
     // Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);   // TODO:
+    ros::ServiceServer service = n.advertiseService("do_the_math", &jmoreira_ns::MyPlayer::serverCallback, &player);
 
     Rate r(20);
     while( ok() ) {
