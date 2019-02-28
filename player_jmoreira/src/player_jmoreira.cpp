@@ -16,6 +16,7 @@
 // #include <pcl/point_types.h>
 // #include <boost/foreach.hpp>
 #include <rws2019_msgs/DoTheMath.h>
+#include <sound_play/sound_play.h>
 
 
 /* Namespaces */
@@ -124,8 +125,11 @@ namespace jmoreira_ns {
             TransformListener listener;
             boost::shared_ptr<Publisher> vis_pub;
             boost::shared_ptr<Publisher> vis_pub2;
-            // string last_prey = "";
-            // string last_hunter = "";
+            string last_prey = "";
+            string last_hunter = "";
+            boost::shared_ptr<ros::Publisher> sound_play_pub;
+            NodeHandle n;
+            sound_play::SoundClient sc;
 
             /* Methods */
             MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in) {
@@ -140,6 +144,9 @@ namespace jmoreira_ns {
                 vis_pub2    = (boost::shared_ptr<Publisher>) new Publisher;
                 (*vis_pub)  = n.advertise<visualization_msgs::Marker>( "player_names", 0 );
                 (*vis_pub2) = n.advertise<visualization_msgs::Marker>( "bocas", 0 );
+
+                sound_play_pub = (boost::shared_ptr<ros::Publisher>) new ros::Publisher;
+                (*sound_play_pub) = n.advertise<sound_play::SoundRequest>("/robotsound", 10);
 
                 if (team_red->playerBelongsToTeam(player_name)) {
                     team_mine    = team_red;
@@ -176,6 +183,9 @@ namespace jmoreira_ns {
                 br.sendTransform( StampedTransform(T, Time::now(), "world", player_name) );
 
                 printInfo();
+
+                last_prey = "";
+                last_hunter = "";
             }
 
             void printInfo(void) {
@@ -240,6 +250,13 @@ namespace jmoreira_ns {
             }
             //? FIXME: ***********************************************************
 
+            //* ****** FIXME: ****************************************************
+            void sleepok(int t, ros::NodeHandle &nh) {
+                if (nh.ok())
+                    sleep(t);
+            }
+            //* ****** FIXME: ****************************************************
+
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
                 ROS_INFO("received a new msg");
 
@@ -262,6 +279,15 @@ namespace jmoreira_ns {
                 marker_bocas.frame_locked = true;
                 // marker_bocas.text = "Vou-te apanhar";
                 */
+                
+                //* Sound
+                sound_play::SoundRequest sound_request;
+                sound_request.sound = -3;
+                sound_request.command = 1;
+                sound_request.volume = 1.0;
+                sound_request.arg = "joao moreira, nothing to say";
+                sound_request.arg2 = "voice_kal_diphone";
+                
 
                 /* Step 1: Find out where I am */
                 StampedTransform T0;
@@ -284,7 +310,7 @@ namespace jmoreira_ns {
                 vector<float> angle_to_preys;
                 // For each prey, find the closest. Then, follow it.
                 for (size_t i=0; i<team_preys->player_names.size(); i++) {                      // team_preys->player_names or msg->green_alive
-                    ROS_WARN_STREAM("Preys = " << team_preys->player_names[i]);
+                    // ROS_WARN_STREAM("Preys = " << team_preys->player_names[i]);
                     std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
                     distance_to_preys.push_back( std::get<0>(t) );
                     angle_to_preys.push_back( std::get<1>(t) );
@@ -303,7 +329,7 @@ namespace jmoreira_ns {
                 vector<float> angle_to_hunters;
                 // For each prey, find the closest. Then, follow it.
                 for (size_t i=0; i<team_hunters->player_names.size(); i++) {                    // team_hunters->player_names or msg->blue_alive
-                    ROS_WARN_STREAM("Hunters = " << team_hunters->player_names[i]);
+                    // ROS_WARN_STREAM("Hunters = " << team_hunters->player_names[i]);
                     std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_hunters->player_names[i]);
                     distance_to_hunters.push_back( std::get<0>(t) );
                     angle_to_hunters.push_back( std::get<1>(t) );
@@ -317,7 +343,6 @@ namespace jmoreira_ns {
                     }
                 }
                 //* Check if last_prey is different from prey
-                /*
                 bool something_changed = false;
                 if (idx_closest_prey != -1) {
                     string prey = team_preys->player_names[idx_closest_prey];
@@ -328,16 +353,16 @@ namespace jmoreira_ns {
                     else
                         something_changed = false;
                 }
-                if (idx_closest_hunter != -1) {
-                    string hunter = team_hunters->player_names[idx_closest_hunter];
-                    if (hunter != last_hunter) {
-                        something_changed = true;
-                        last_hunter = hunter;
-                    }
-                    else
-                        something_changed = false;
-                }
-                */
+                // if (idx_closest_hunter != -1) {
+                //     string hunter = team_hunters->player_names[idx_closest_hunter];
+                //     if (hunter != last_hunter) {
+                //         something_changed = true;
+                //         last_hunter = hunter;
+                //     }
+                //     else
+                //         something_changed = false;
+                // }
+                
 
                 //* WORLD BOUNDARIES
                 vector<float> distance_to_center;
@@ -365,14 +390,18 @@ namespace jmoreira_ns {
                     if (distance_to_preys[idx_closest_prey] < 1)
                         dx = 0.1;
                     angle = angle_to_preys[idx_closest_prey]; 
-                    /*
+
+                    // sound_play_pub->publish(sound_request);
+                    
                     string prey_name = team_preys->player_names[idx_closest_prey];
                     if (something_changed = true) {
-                        marker_bocas.lifetime = ros::Duration(1);
-                        marker_bocas.text = "Vou-te apanhar " + prey_name;
-                        vis_pub2->publish( marker_bocas );
+                        // sc.say("jmoreira: Hello there " + team_preys->player_names[idx_closest_prey]);
+                        // sleepok(1, n);
+                        // marker_bocas.lifetime = ros::Duration(1);
+                        // marker_bocas.text = "Vou-te apanhar " + prey_name;
+                        // vis_pub2->publish( marker_bocas );
                     }
-                    */
+                    
                 }
                 else if ((distance_to_center[0] > 6.8) && (distance_to_center[0] <= 7.6)) {
                     dx = msg->turtle * 0.8;
@@ -424,7 +453,7 @@ namespace jmoreira_ns {
                 }
                 */
 
-
+                
                 /* Step 2.5: check values */
                 double dx_max = msg->turtle; // must be hardcoded
                 dx > dx_max ? dx = dx_max: dx = dx;
@@ -483,7 +512,7 @@ int main(int argc, char* argv[]) {
     player.printInfo();
 
     Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
-    // Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);   // TODO:
+    // Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);
     ros::ServiceServer service = n.advertiseService("do_the_math", &jmoreira_ns::MyPlayer::serverCallback, &player);
 
     Rate r(20);
