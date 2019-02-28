@@ -1,6 +1,7 @@
 /*
  * cc 
  * roslaunch rws2019_bringup bringup.launch 
+ * rosrun rws2019_referee referee2.py
  */
 
 /* Includes */
@@ -11,9 +12,9 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
-#include <boost/foreach.hpp>
+// #include <pcl_ros/point_cloud.h>
+// #include <pcl/point_types.h>
+// #include <boost/foreach.hpp>
 
 
 /* Namespaces */
@@ -22,7 +23,7 @@ using namespace boost;
 using namespace ros;
 using namespace tf;
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+// typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 float randomizePosition(void) {
     srand( 6532 * time(NULL) );                             // set initial seed value to 5323
@@ -205,11 +206,13 @@ namespace jmoreira_ns {
             }
 
             // TODO: ################################################################
+            /*
             void pointCloudCallback(const PointCloud::ConstPtr& msg) {
                 printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
                 BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
                     printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
             }
+            */
             // TODO: ################################################################
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
@@ -455,7 +458,7 @@ int main(int argc, char* argv[]) {
     player.printInfo();
 
     Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
-    Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);   // TODO:
+    // Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);   // TODO:
 
     Rate r(20);
     while( ok() ) {
