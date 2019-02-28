@@ -11,6 +11,9 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <boost/foreach.hpp>
 
 
 /* Namespaces */
@@ -19,6 +22,7 @@ using namespace boost;
 using namespace ros;
 using namespace tf;
 
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 float randomizePosition(void) {
     srand( 6532 * time(NULL) );                             // set initial seed value to 5323
@@ -186,7 +190,7 @@ namespace jmoreira_ns {
                     listener.lookupTransform(player_name, other_player, Time(0), T);
                 }
                 catch (TransformException& ex) {
-                    ROS_ERROR("%s", ex.what());
+                    // ROS_ERROR("%s", ex.what());
                     Duration(0.01).sleep();
                     return {1000.0, 0.0};
                 }
@@ -199,6 +203,14 @@ namespace jmoreira_ns {
             std::tuple<float, float> getDistanceAndAngleToArena(void) {
                 return getDistanceAndAngleToPlayer("world");
             }
+
+            // TODO: ################################################################
+            void pointCloudCallback(const PointCloud::ConstPtr& msg) {
+                printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+                BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+                    printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+            }
+            // TODO: ################################################################
 
             void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg) {
                 ROS_INFO("received a new msg");
@@ -229,7 +241,7 @@ namespace jmoreira_ns {
                     listener.lookupTransform("/world", player_name, Time(0), T0);
                 }
                 catch (TransformException ex) {
-                    ROS_ERROR("%s", ex.what());
+                    // ROS_ERROR("%s", ex.what());
                     Duration(0.1).sleep();
                 }
 
@@ -308,7 +320,7 @@ namespace jmoreira_ns {
                 //* PREYS vs HUNTERS vs WORLD
                 float dx;
                 float angle;
-                if ((distance_to_preys[idx_closest_prey] > distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
+                if ((distance_to_preys[idx_closest_prey] >= distance_to_hunters[idx_closest_hunter]) && (distance_to_center[0] <= 6.8)) {
                     dx = msg->turtle; 
                     angle = (-1) * angle_to_hunters[idx_closest_hunter]; // M_PI/2 + angle_to_hunters[idx_closest_hunter] OR (-1) * angle_to_hunters[idx_closest_hunter]
                     /*
@@ -334,7 +346,7 @@ namespace jmoreira_ns {
                     }
                     */
                 }
-                else if ((distance_to_center[0] >= 6.8) && (distance_to_center[0] <= 7.6)) {
+                else if ((distance_to_center[0] > 6.8) && (distance_to_center[0] <= 7.6)) {
                     dx = msg->turtle * 0.8;
                     angle = angle_to_center[0];
                 }
@@ -443,6 +455,7 @@ int main(int argc, char* argv[]) {
     player.printInfo();
 
     Subscriber sub = n.subscribe("/make_a_play", 100, &MyPlayer::makeAPlayCallback, &player);
+    Subscriber point_cloud = n.subscribe<PointCloud>("/object_point_cloud", 1, &MyPlayer::pointCloudCallback, &player);   // TODO:
 
     Rate r(20);
     while( ok() ) {
